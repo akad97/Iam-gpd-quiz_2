@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Cadrage d'un projet digital</title>
+<style>
+  :root{
+    --navy: #16223f;
+    --navy-2: #1e2f56;
+    --teal: #14b8d4;
+    --teal-dark: #0e93aa;
+    --bg: #eef1f6;
+    --card: #ffffff;
+    --ok: #2f9e5c;
+    --bad: #d9534f;
+    --text: #16223f;
+    --muted: #5c6b8a;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, #e3e8f2 100%);
+    color: var(--text);
+    min-height:100vh;
+    padding: 24px 16px 60px;
+  }
+  .wrap{max-width: 760px; margin: 0 auto; position:relative;}
+  header{
+    text-align:center;
+    margin-bottom: 22px;
+  }
+  header .eyebrow{
+    color: var(--teal-dark);
+    font-weight:700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  header h1{
+    font-size: clamp(22px, 4vw, 30px);
+    margin: 0 0 6px;
+    color: var(--navy);
+  }
+  header p{ color: var(--muted); margin:0; font-size: 14px;}
+
+  .progress-shell{
+    background:#dfe4ee;
+    border-radius: 999px;
+    height: 10px;
+    overflow:hidden;
+    margin: 18px 0 8px;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, var(--teal), var(--teal-dark));
+    transition: width .35s ease;
+  }
+  .meta-row{
+    display:flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 6px;
+  }
+  .score-pill{
+    font-weight:700; color: var(--navy);
+  }
+
+  .card{
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 26px 24px;
+    box-shadow: 0 10px 30px rgba(22,34,63,0.08);
+    margin-top: 10px;
+  }
+
+  .qnum{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width: 30px; height:30px;
+    border-radius: 50%;
+    background: var(--navy);
+    color:#fff;
+    font-weight:700;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+
+  .question{
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0 0 18px;
+    color: var(--navy);
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .option{
+    text-align:left;
+    padding: 13px 16px;
+    border-radius: 10px;
+    border: 1.5px solid #dde2ee;
+    background: #fbfcfe;
+    cursor:pointer;
+    font-size: 15px;
+    color: var(--text);
+    transition: all .15s ease;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .option:hover:not(.locked){
+    border-color: var(--teal);
+    background: #f0fbfd;
+  }
+  .option .letter{
+    width:24px; height:24px;
+    border-radius:50%;
+    background:#e7ebf5;
+    color: var(--navy);
+    font-size:12px;
+    font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .option.selected{
+    border-color: var(--teal-dark);
+    background: #eafaff;
+  }
+  .option.selected .letter{ background: var(--teal-dark); color:#fff; }
+  .option.correct{
+    border-color: var(--ok);
+    background: #e9f8ef;
+  }
+  .option.correct .letter{ background: var(--ok); color:#fff; }
+  .option.incorrect{
+    border-color: var(--bad);
+    background: #fcecec;
+  }
+  .option.incorrect .letter{ background: var(--bad); color:#fff; }
+  .option.locked{ cursor:default; }
+  .option.dim{ opacity: .55; }
+
+  .feedback{
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height:1.5;
+    display:none;
+  }
+  .feedback.show{ display:block; }
+  .feedback.ok{ background:#e9f8ef; color:#1c6b3f; border:1px solid #bfe8cd;}
+  .feedback.bad{ background:#fcecec; color:#a33330; border:1px solid #f3c6c4;}
+
+  .nav-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top: 20px;
+    gap: 10px;
+  }
+  .btn{
+    border:none;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    background: var(--navy);
+    color:#fff;
+    transition: transform .12s ease, background .15s ease;
+  }
+  .btn:hover{ background: var(--navy-2); transform: translateY(-1px); }
+  .btn:disabled{
+    background:#b9c0d4; cursor:not-allowed; transform:none;
+  }
+  .btn.secondary{
+    background: transparent;
+    color: var(--navy);
+    border: 1.5px solid #c7cfe2;
+  }
+  .btn.secondary:hover{ background:#eef1f8; }
+  .btn.ghost{
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid #dde2ee;
+  }
+  .btn.ghost:hover{ background:#f4f6fb; }
+
+  .hint{
+    font-size:12px;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  .results{
+    text-align:center;
+    padding: 10px 6px 4px;
+  }
+  .results .big-score{
+    font-size: 52px;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 6px 0 2px;
+  }
+  .results .big-score span{ font-size: 22px; color: var(--muted); font-weight:600;}
+  .results .msg{
+    font-size:15px;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .bars{
+    display:flex; flex-direction:column; gap:8px; text-align:left; margin: 20px 0;
+  }
+  .bar-row{
+    display:flex; align-items:center; gap:10px; font-size:13px;
+  }
+  .bar-row .label{ width: 30px; flex-shrink:0; color:var(--muted); font-weight:700; }
+  .bar-track{
+    flex:1; height: 10px; background:#e7ebf5; border-radius: 999px; overflow:hidden;
+  }
+  .bar-fill{ height:100%; border-radius:999px; }
+  .bar-fill.ok{ background: var(--ok); }
+  .bar-fill.bad{ background: var(--bad); }
+
+  .actions{
+    display:flex; gap:10px; justify-content:center; margin-top: 10px; flex-wrap:wrap;
+  }
+
+  .start-screen{ text-align:center; }
+  .start-screen ul{
+    text-align:left;
+    display:inline-block;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.9;
+    margin: 18px 0;
+  }
+  .footer-note{
+    text-align:center;
+    font-size:12px;
+    color: var(--muted);
+    margin-top: 26px;
+  }
+
+  /* Confirmation modal */
+  .overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(22, 34, 63, 0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .overlay.show{ display:flex; }
+  .modal{
+    background:#fff;
+    border-radius: 16px;
+    padding: 26px 24px;
+    max-width: 380px;
+    width:100%;
+    text-align:center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    animation: pop .15s ease;
+  }
+  @keyframes pop{
+    from{ transform: scale(.92); opacity:0; }
+    to{ transform: scale(1); opacity:1; }
+  }
+  .modal .icon{
+    width: 46px; height:46px;
+    border-radius:50%;
+    background: #fff3d6;
+    color:#b8860b;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px;
+    margin: 0 auto 14px;
+  }
+  .modal h3{
+    margin: 0 0 8px;
+    font-size:17px;
+    color: var(--navy);
+  }
+  .modal p{
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height:1.5;
+  }
+  .modal .modal-actions{
+    display:flex;
+    gap: 10px;
+    justify-content:center;
+  }
+  .modal .modal-actions .btn{ flex:1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Marketing &amp; Business Intelligence</div>
+    <h1>Cadrage d'un projet digital</h1>
+    <p>Quiz de révision — 20 questions</p>
+  </header>
+
+  <div id="app"></div>
+
+  <div class="footer-note">Besoin · Parties prenantes · Objectifs SMART · Cahier des charges</div>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <div class="icon">?</div>
+    <h3>Valider cette réponse ?</h3>
+    <p>Une fois validée, votre réponse ne pourra plus être modifiée pour cette question.</p>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="cancelConfirm()">Annuler</button>
+      <button class="btn" onclick="confirmAnswer()">Oui, valider</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    q: "Comment définit-on le cadrage de projet ?",
+    options: [
+      "La dernière étape avant la clôture du projet",
+      "La phase initiale qui consiste à clarifier le besoin, les objectifs, le périmètre et les contraintes, avant tout lancement opérationnel",
+      "Un document uniquement destiné à l'équipe technique",
+      "Une étape facultative réservée aux petits projets"
+    ],
+    correct: 1,
+    explain: "Le cadrage est la phase initiale qui clarifie le besoin, les objectifs, le périmètre et les contraintes d'un projet avant son lancement opérationnel."
+  },
+  {
+    q: "Pourquoi le cadrage est-il essentiel ?",
+    options: [
+      "Il permet de réduire l'incertitude, d'aligner les acteurs et d'éviter les dérives de délai et de budget",
+      "Il sert uniquement à remplir une formalité administrative",
+      "Il remplace la phase d'exécution du projet",
+      "Il n'a aucun impact sur le déroulement du projet"
+    ],
+    correct: 0,
+    explain: "Le cadrage réduit l'incertitude, aligne les acteurs autour d'une vision commune et évite les dérives, un périmètre mal défini étant la première cause de dépassement de délai et de budget."
+  },
+  {
+    q: "Quel est le bon enchaînement des 4 étapes du cadrage ?",
+    options: [
+      "Cahier des charges → Objectifs SMART → Analyse des parties prenantes → Identification du besoin",
+      "Identification du besoin → Analyse des parties prenantes → Objectifs SMART → Cahier des charges",
+      "Analyse des parties prenantes → Cahier des charges → Identification du besoin → Objectifs SMART",
+      "Objectifs SMART → Identification du besoin → Cahier des charges → Analyse des parties prenantes"
+    ],
+    correct: 1,
+    explain: "Les 4 étapes s'enchaînent logiquement : identification du besoin, analyse des parties prenantes, objectifs SMART, puis cahier des charges — tout en restant itératives."
+  },
+  {
+    q: "Dans le schéma 'besoin exprimé vs besoin réel', que représente le besoin réel ?",
+    options: [
+      "La partie visible de l'iceberg, immédiatement énoncée par le client",
+      "La partie sous-jacente, plus profonde, que le chef de projet doit creuser pour comprendre les motivations réelles",
+      "Une demande qui n'a jamais besoin d'être vérifiée",
+      "Le même contenu que le besoin exprimé, reformulé différemment"
+    ],
+    correct: 1,
+    explain: "Comme un iceberg, la demande initiale (besoin exprimé) n'est que la partie visible ; le besoin réel, sous-jacent, doit être mis en évidence par le chef de projet."
+  },
+  {
+    q: "À quoi sert la technique des '5 pourquoi' ?",
+    options: [
+      "À planifier le budget du projet",
+      "À remonter du symptôme exprimé jusqu'à la cause réelle du besoin en posant 'pourquoi ?' de manière répétée",
+      "À évaluer la satisfaction des utilisateurs finaux",
+      "À répartir les rôles RACI entre les acteurs"
+    ],
+    correct: 1,
+    explain: "En posant 'pourquoi ?' de façon répétée, on remonte progressivement du constat de départ jusqu'à la cause réelle du besoin."
+  },
+  {
+    q: "Parmi les techniques de recueil du besoin, laquelle consiste en des 'échanges approfondis avec le commanditaire et les futurs utilisateurs clés' ?",
+    options: [
+      "Le benchmark concurrentiel",
+      "Les entretiens individuels",
+      "L'analyse de l'existant",
+      "Les enquêtes / sondages"
+    ],
+    correct: 1,
+    explain: "Les entretiens individuels permettent des échanges approfondis avec le commanditaire et les futurs utilisateurs clés."
+  },
+  {
+    q: "Quelles sont les trois catégories de parties prenantes présentées dans le cours ?",
+    options: [
+      "Techniques, fonctionnelles, contractuelles",
+      "Internes, externes, institutionnelles",
+      "Actives, passives, neutres",
+      "Primaires, secondaires, tertiaires"
+    ],
+    correct: 1,
+    explain: "Les parties prenantes se répartissent en trois catégories : internes (direction, équipe projet...), externes (clients, prestataires...) et institutionnelles (régulateurs, organismes de financement...)."
+  },
+  {
+    q: "Dans la matrice pouvoir / intérêt, quel quadrant correspond à un 'intérêt élevé' et un 'pouvoir élevé' ?",
+    options: [
+      "Effort minimal",
+      "Tenir informé",
+      "Satisfaire",
+      "Gérer de près"
+    ],
+    correct: 3,
+    explain: "Le quadrant 'Gérer de près' regroupe les parties prenantes à intérêt élevé et pouvoir élevé : elles doivent être impliquées étroitement."
+  },
+  {
+    q: "Quelle stratégie d'engagement correspond au profil 'intérêt élevé, pouvoir faible' ?",
+    options: [
+      "Gérer de près, via des comités de pilotage",
+      "Tenir informé, via des newsletters et comptes rendus",
+      "Effort minimal, via une communication passive",
+      "Satisfaire, via des points d'étape synthétiques"
+    ],
+    correct: 1,
+    explain: "Le profil 'intérêt élevé, pouvoir faible' correspond au quadrant 'Tenir informé' : on informe régulièrement pour maintenir l'adhésion (newsletters, comptes rendus, démonstrations)."
+  },
+  {
+    q: "Que recommande le cours pour les parties prenantes classées en 'Effort minimal' ?",
+    options: [
+      "Les impliquer dans chaque comité de pilotage",
+      "Un suivi léger : information générale et communication passive (intranet, affichage)",
+      "Leur envoyer des rapports détaillés chaque semaine",
+      "Les exclure totalement de toute communication"
+    ],
+    correct: 1,
+    explain: "Pour le quadrant 'Effort minimal' (intérêt faible, pouvoir faible), un suivi léger suffit : information générale et communication passive."
+  },
+  {
+    q: "Dans la méthode SMART, que signifie le 'S' ?",
+    options: [
+      "Simple",
+      "Spécifique : un objectif précis, sans ambiguïté, qui répond clairement à un besoin identifié",
+      "Stratégique",
+      "Structuré"
+    ],
+    correct: 1,
+    explain: "Le 'S' de SMART signifie Spécifique : un objectif précis, sans ambiguïté, qui répond clairement à un besoin identifié."
+  },
+  {
+    q: "Dans la méthode SMART, à quoi correspond le 'M' ?",
+    options: [
+      "Mesurable : un indicateur chiffré permet de vérifier objectivement l'atteinte de l'objectif",
+      "Motivant pour l'équipe uniquement",
+      "Minimal en termes de ressources",
+      "Modifiable à tout moment sans contrainte"
+    ],
+    correct: 0,
+    explain: "Le 'M' de SMART signifie Mesurable : un indicateur chiffré permet de vérifier objectivement si l'objectif est atteint."
+  },
+  {
+    q: "Lequel des objectifs suivants est un exemple d'objectif VAGUE (non SMART) selon le cours ?",
+    options: [
+      "Augmenter le score de satisfaction (CSAT) de 68% à 80% d'ici la fin du 2e trimestre 2027",
+      "Améliorer la satisfaction client sur notre application",
+      "Réduire le taux d'abandon panier de 45% à 30% en 6 mois",
+      "Atteindre 10 000 téléchargements en 3 mois"
+    ],
+    correct: 1,
+    explain: "'Améliorer la satisfaction client sur notre application' est cité comme objectif vague : il manque de mesure précise, de cible chiffrée et d'échéance."
+  },
+  {
+    q: "Selon le tableau 'des objectifs aux indicateurs de suivi', à quelle fréquence le score CSAT mensuel est-il suivi ?",
+    options: [
+      "Quotidienne",
+      "Hebdomadaire",
+      "Mensuelle",
+      "Annuelle"
+    ],
+    correct: 2,
+    explain: "Le score CSAT est suivi selon un indicateur mensuel, avec une fréquence de suivi mensuelle."
+  },
+  {
+    q: "Parmi les quatre rôles du cahier des charges cités dans le cours, lequel correspond à 'servir de référence commune entre client, sponsor et équipe projet' ?",
+    options: [
+      "Cadrer",
+      "Aligner",
+      "Contractualiser",
+      "Arbitrer"
+    ],
+    correct: 1,
+    explain: "'Aligner' consiste à faire du cahier des charges une référence commune partagée entre le client, le sponsor et l'équipe projet."
+  },
+  {
+    q: "Dans la structure type d'un cahier des charges, quelle rubrique décrit 'les fonctionnalités incluses et explicitement exclues du projet' ?",
+    options: [
+      "Contexte",
+      "Objectifs",
+      "Périmètre",
+      "Critères de réception"
+    ],
+    correct: 2,
+    explain: "La rubrique 'Périmètre' précise les fonctionnalités incluses et celles explicitement exclues du projet."
+  },
+  {
+    q: "Qui rédige généralement le cahier des charges FONCTIONNEL, selon le cours ?",
+    options: [
+      "L'équipe technique / l'architecte",
+      "Le commanditaire / le Product Owner",
+      "Les régulateurs institutionnels",
+      "Uniquement les prestataires externes"
+    ],
+    correct: 1,
+    explain: "Le cahier des charges fonctionnel est rédigé par le commanditaire ou le Product Owner et décrit le 'quoi' (besoins et fonctionnalités attendues)."
+  },
+  {
+    q: "Parmi les 'bonnes pratiques de rédaction' citées, laquelle est recommandée ('À faire') ?",
+    options: [
+      "Rester vague sur les fonctionnalités attendues",
+      "Prioriser les exigences (must have / nice to have)",
+      "Mélanger besoins fonctionnels et solutions techniques imposées",
+      "Considérer le document comme figé une fois validé"
+    ],
+    correct: 1,
+    explain: "Prioriser les exigences (must have / nice to have) fait partie des bonnes pratiques recommandées pour la rédaction du cahier des charges."
+  },
+  {
+    q: "Parmi les erreurs à éviter dans la rédaction du cahier des charges, laquelle est citée ?",
+    options: [
+      "Illustrer avec des maquettes, schémas ou exemples",
+      "Faire valider le document par toutes les parties prenantes clés",
+      "Rédiger seul sans consulter les utilisateurs finaux",
+      "Quantifier chaque exigence autant que possible"
+    ],
+    correct: 2,
+    explain: "Rédiger le cahier des charges seul, sans consulter les utilisateurs finaux, fait partie des erreurs à éviter selon le cours."
+  },
+  {
+    q: "Dans la synthèse 'le processus de cadrage en un coup d'œil', quel outil est associé à l'étape 'Analyser les parties prenantes' ?",
+    options: [
+      "La technique des 5 pourquoi",
+      "La matrice pouvoir / intérêt",
+      "La méthode S-M-A-R-T",
+      "La structure type du cahier des charges"
+    ],
+    correct: 1,
+    explain: "L'étape 'Analyser les parties prenantes' s'appuie sur la matrice pouvoir / intérêt, qui aboutit à un plan d'engagement."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answers = new Array(QUESTIONS.length).fill(null);
+let answered = false;
+let selectedIndex = null;
+
+const app = document.getElementById('app');
+const overlay = document.getElementById('confirmOverlay');
+
+function renderStart(){
+  app.innerHTML = `
+    <div class="card start-screen">
+      <div class="qnum" style="width:44px;height:44px;font-size:16px;">GO</div>
+      <p style="font-size:15px;color:var(--muted);margin:6px 0 4px;">Testez vos connaissances sur :</p>
+      <ul>
+        <li>Ce qu'est le cadrage et pourquoi il conditionne la réussite d'un projet</li>
+        <li>Identifier le besoin réel derrière une demande initiale</li>
+        <li>Cartographier les parties prenantes (matrice pouvoir / intérêt)</li>
+        <li>Formuler des objectifs SMART</li>
+        <li>Structurer un cahier des charges clair et exploitable</li>
+      </ul>
+      <p class="hint">Chaque réponse doit être confirmée avant validation.</p>
+      <div>
+        <button class="btn" onclick="startQuiz()">Commencer le quiz</button>
+      </div>
+    </div>
+  `;
+}
+
+function startQuiz(){
+  current = 0; score = 0;
+  answers = new Array(QUESTIONS.length).fill(null);
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answered = false;
+  selectedIndex = null;
+  const q = QUESTIONS[current];
+  const letters = ['A','B','C','D'];
+
+  const progressPct = Math.round((current / QUESTIONS.length) * 100);
+
+  app.innerHTML = `
+    <div class="meta-row">
+      <span>Question ${current + 1} / ${QUESTIONS.length}</span>
+      <span class="score-pill">Score : ${score} / ${QUESTIONS.length}</span>
+    </div>
+    <div class="progress-shell"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+    <div class="card">
+      <div class="qnum">${current + 1}</div>
+      <p class="question">${q.q}</p>
+      <div class="options" id="options">
+        ${q.options.map((opt, i) => `
+          <button class="option" data-index="${i}" onclick="selectOption(${i})">
+            <span class="letter">${letters[i]}</span>
+            <span>${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="nav-row">
+        <button class="btn secondary" id="validateBtn" disabled onclick="askConfirm()">Valider ma réponse</button>
+        <button class="btn" id="nextBtn" disabled onclick="nextQuestion()">
+          ${current === QUESTIONS.length - 1 ? 'Voir les résultats' : 'Question suivante'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function selectOption(i){
+  if(answered) return;
+  selectedIndex = i;
+  document.querySelectorAll('.option').forEach((el, idx) => {
+    el.classList.toggle('selected', idx === i);
+  });
+  document.getElementById('validateBtn').disabled = false;
+}
+
+function askConfirm(){
+  if(answered || selectedIndex === null) return;
+  overlay.classList.add('show');
+}
+
+function cancelConfirm(){
+  overlay.classList.remove('show');
+}
+
+function confirmAnswer(){
+  overlay.classList.remove('show');
+  lockInAnswer();
+}
+
+function lockInAnswer(){
+  if(answered || selectedIndex === null) return;
+  answered = true;
+  const q = QUESTIONS[current];
+  const opts = document.querySelectorAll('.option');
+  const correct = q.correct;
+  const isCorrect = selectedIndex === correct;
+
+  answers[current] = isCorrect;
+  if(isCorrect) score++;
+
+  opts.forEach((el, idx) => {
+    el.classList.add('locked');
+    el.classList.remove('selected');
+    if(idx === correct){
+      el.classList.add('correct');
+    } else if(idx === selectedIndex){
+      el.classList.add('incorrect');
+    } else {
+      el.classList.add('dim');
+    }
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.classList.add('show');
+  fb.classList.add(isCorrect ? 'ok' : 'bad');
+  fb.innerHTML = (isCorrect ? '✅ Exact — ' : '❌ Pas tout à fait — ') + q.explain;
+
+  document.getElementById('validateBtn').disabled = true;
+  document.getElementById('nextBtn').disabled = false;
+
+  document.querySelector('.meta-row .score-pill').textContent = `Score : ${score} / ${QUESTIONS.length}`;
+}
+
+function nextQuestion(){
+  if(current < QUESTIONS.length - 1){
+    current++;
+    renderQuestion();
+  } else {
+    renderResults();
+  }
+}
+
+function renderResults(){
+  const pct = Math.round((score / QUESTIONS.length) * 100);
+  let msg = "";
+  if(pct >= 90) msg = "Excellent ! Les fondamentaux du cadrage de projet digital sont maîtrisés.";
+  else if(pct >= 70) msg = "Bon score ! Quelques notions à revoir pour être tout à fait au point.";
+  else if(pct >= 50) msg = "Pas mal, mais une relecture du support serait utile.";
+  else msg = "Une révision du support est recommandée avant de retenter le quiz.";
+
+  const barsHTML = QUESTIONS.map((q, i) => {
+    const ok = answers[i];
+    return `
+      <div class="bar-row">
+        <span class="label">Q${i+1}</span>
+        <div class="bar-track"><div class="bar-fill ${ok ? 'ok' : 'bad'}" style="width:100%"></div></div>
+        <span>${ok ? '✅' : '❌'}</span>
+      </div>
+    `;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="card results">
+      <div style="color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Résultat final</div>
+      <div class="big-score">${score}<span> / ${QUESTIONS.length}</span></div>
+      <div style="color:var(--teal-dark);font-weight:700;font-size:18px;margin-bottom:6px;">${pct}%</div>
+      <div class="msg">${msg}</div>
+      <div class="bars">${barsHTML}</div>
+      <div class="actions">
+        <button class="btn secondary" onclick="renderStart()">Retour à l'accueil</button>
+        <button class="btn" onclick="startQuiz()">Recommencer le quiz</button>
+      </div>
+    </div>
+  `;
+}
+
+renderStart();
+</script>
+</body>
+</html>
